@@ -13,7 +13,6 @@ import me.hsgamer.morefoworld.config.SpawnConfig;
 import me.hsgamer.morefoworld.config.WorldSpawnConfig;
 import me.hsgamer.morefoworld.config.object.WorldPosition;
 import me.hsgamer.morefoworld.initializer.WorldInitializer;
-import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
 import org.bukkit.command.CommandException;
@@ -88,26 +87,23 @@ public class Commands {
     @Permission("morefoworld.load")
     public void loadWorld(CommandSender sender, String name) {
         WorldCreator creator = WorldCreator.name(name);
-        WorldInitializer.FeedbackWorld result = plugin.get(WorldInitializer.class).addWorld(creator);
-        switch (result.feedback()) {
-            case SUCCESS -> MessageUtils.sendMessage(sender, "&aWorld &e" + name + " &ahas been loaded");
-            case WORLD_ALREADY_EXISTS -> MessageUtils.sendMessage(sender, "&cWorld &e" + name + " &calready exists");
-            case ERROR -> {
-                MessageUtils.sendMessage(sender, "&cFailed to load world &e" + name + "&c: " + (result.throwable() != null ? result.throwable().getMessage() : "Unknown error"));
-                plugin.getLogger().log(Level.WARNING, "Failed to load world " + name, result.throwable());
+        plugin.get(WorldInitializer.class).addWorld(creator).thenAccept(result -> {
+            switch (result.feedback()) {
+                case SUCCESS -> MessageUtils.sendMessage(sender, "&aWorld &e" + name + " &ahas been loaded");
+                case WORLD_ALREADY_EXISTS ->
+                        MessageUtils.sendMessage(sender, "&cWorld &e" + name + " &calready exists");
+                case ERROR -> {
+                    MessageUtils.sendMessage(sender, "&cFailed to load world &e" + name + "&c: " + (result.throwable() != null ? result.throwable().getMessage() : "Unknown error"));
+                    plugin.getLogger().log(Level.WARNING, "Failed to load world " + name, result.throwable());
+                }
+                default -> MessageUtils.sendMessage(sender, "&cUnexpected feedback: " + result.feedback());
             }
-            default -> MessageUtils.sendMessage(sender, "&cUnexpected feedback: " + result.feedback());
-        }
+        });
     }
 
     @Command(value = "unload", description = "Unload a world")
-    @Permission("morefoworld.unload")
+    @Permission("morefoworld.load")
     public void unloadWorld(CommandSender sender, World world) {
-        if (world.equals(Bukkit.getWorlds().get(0))) {
-            MessageUtils.sendMessage(sender, "&cCannot unload the main world");
-            return;
-        }
-
         plugin.get(WorldInitializer.class).unloadWorld(plugin, world, true).thenAccept(feedback -> {
             switch (feedback) {
                 case SUCCESS -> MessageUtils.sendMessage(sender, "&aUnloading world &e" + world.getName() + "&a...");
