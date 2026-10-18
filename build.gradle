@@ -8,7 +8,7 @@ plugins {
 }
 
 group = 'me.hsgamer'
-version = '1.17.0'
+version = '1.17.1-compat.1'
 def snapshot = false
 description = 'A preference world manager for Folia'
 
@@ -54,6 +54,7 @@ configurations.configureEach {
 }
 
 dependencies {
+    testImplementation 'junit:junit:4.13.2'
     paperweight.foliaDevBundle("${serverVersion}.local-SNAPSHOT")
 
     def core = "4.5.7"
